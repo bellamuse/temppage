@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('SpoofD_18.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .mobile-guide {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            max-width: 350px;
+            width: 90%;
+        }
+
+        .mobile-guide.show {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            line-height: 1.2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 18px;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .arrow {
+            position: absolute;
+            top: 60px;
+            right: 30px;
+            width: 50px;
+            height: 80px;
+            animation: bounce 1.5s infinite;
+            z-index: 1000;
+        }
+
+        .arrow::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 40px;
+            background: #ff4444;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 30px solid #ff4444;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .finger-icon {
+            color: #ff6b9d;
+            font-size: 24px;
+        }
+
+        .browser-icon {
+            color: #4ecdc4;
+            font-size: 24px;
+        }
+
+        /* Background image overlay for mobile */
+        .mobile-guide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+            z-index: -1;
+        }
+
+        /* Desktop styles */
+        .desktop-redirect {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .redirect-message {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Arrow pointing to top right -->
+    <div class="arrow" id="arrow"></div>
+
+    <!-- Mobile Guide Content -->
+    <div class="mobile-guide" id="mobileGuide">
+        <h1 class="title">Want to see more? Just follow these simple steps:</h1>
+        
+        <div class="step">
+            <div class="step-icon">
+                <span class="finger-icon">⋯</span>
+            </div>
+            <div class="step-text">Click the ⋯ button in the top right</div>
+        </div>
+
+        <div class="step">
+            <div class="step-icon">
+                <span class="browser-icon">🌐</span>
+            </div>
+            <div class="step-text">Select "Open in browser"</div>
+        </div>
+    </div>
+
+    <!-- Desktop Redirect Content -->
+    <div class="desktop-redirect" id="desktopRedirect">
+        <div class="redirect-message">Redirecting...</div>
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // Configuration - Replace with your desired redirect URL
+        const REDIRECT_URL = 'https://example.com'; // Change this to your desired link
+        
+        // Testing mode - Set to true to force mobile view on desktop for testing
+        const FORCE_MOBILE_VIEW = true; // Change to false for production
+
+        function isMobileDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            
+            // Check for mobile user agents
+            const mobileKeywords = [
+                'Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
+                'IEMobile', 'Opera Mini', 'Mobile', 'mobile'
+            ];
+            
+            const isMobileUA = mobileKeywords.some(keyword => 
+                userAgent.toLowerCase().includes(keyword.toLowerCase())
+            );
+            
+            // Check for touch capability and screen size
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 768;
+            
+            return isMobileUA || (isTouchDevice && isSmallScreen);
+        }
+
+        function isInAppBrowser() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            
+            // Check specifically for TikTok and Instagram in-app browsers
+            const inAppIndicators = [
+                'tiktok', 'instagram'
+            ];
+            
+            return inAppIndicators.some(indicator => userAgent.includes(indicator));
+        }
+
+        function initializePage() {
+            const mobileGuide = document.getElementById('mobileGuide');
+            const desktopRedirect = document.getElementById('desktopRedirect');
+            const arrow = document.getElementById('arrow');
+
+            // Check if we should show mobile view (forced for testing OR specifically in TikTok/Instagram in-app browsers)
+            const showMobileView = FORCE_MOBILE_VIEW || isInAppBrowser();
+
+            if (showMobileView) {
+                // Show mobile guide
+                mobileGuide.classList.add('show');
+                desktopRedirect.style.display = 'none';
+                arrow.style.display = 'block';
+            } else {
+                // All other cases: redirect after short delay
+                mobileGuide.style.display = 'none';
+                arrow.style.display = 'none';
+                
+                setTimeout(() => {
+                    window.location.href = REDIRECT_URL;
+                }, 2000);
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initializePage);
+        
+        // Handle orientation changes on mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(initializePage, 100);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            setTimeout(initializePage, 100);
+        });
+    </script>
+</body>
+</html>
