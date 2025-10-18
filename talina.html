@@ -231,7 +231,7 @@
         function isInAppBrowser() {
             const userAgent = navigator.userAgent.toLowerCase();
             
-            // More comprehensive check for in-app browsers
+            // First, check for specific in-app browser indicators
             const inAppIndicators = [
                 'tiktok',
                 'bytedance',
@@ -245,14 +245,28 @@
                 'snapchat'
             ];
             
-            // Also check for common in-app browser patterns
-            const isInApp = inAppIndicators.some(indicator => userAgent.includes(indicator));
+            // If we find a specific in-app browser indicator, it's definitely in-app
+            const hasInAppIndicator = inAppIndicators.some(indicator => userAgent.includes(indicator));
             
-            // Additional check: if it's mobile but NOT a standard browser
-            const isStandardBrowser = userAgent.includes('safari') && !userAgent.includes('crios') && !userAgent.includes('fxios');
+            if (hasInAppIndicator) {
+                return true;
+            }
+            
+            // Check if it's a standard mobile browser (these should NOT be treated as in-app)
+            const isStandardBrowser = 
+                (userAgent.includes('safari') && !userAgent.includes('crios') && !userAgent.includes('fxios')) || // Mobile Safari
+                (userAgent.includes('chrome') && !userAgent.includes('wv') && userAgent.includes('mobile')) || // Chrome Mobile (not WebView)
+                userAgent.includes('firefox') || // Firefox Mobile
+                userAgent.includes('edge'); // Edge Mobile
+            
+            // If it's a standard browser, it's NOT in-app
+            if (isStandardBrowser) {
+                return false;
+            }
+            
+            // For everything else, assume it might be in-app if it's mobile
             const isMobile = /android|iphone|ipad|ipod/i.test(userAgent);
-            
-            return isInApp || (isMobile && !isStandardBrowser && !userAgent.includes('chrome'));
+            return isMobile;
         }
 
         function initializePage() {
