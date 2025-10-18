@@ -14,7 +14,8 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             height: 100vh;
-            background: url('landertalina.jpg');
+            /* Placeholder for your background image */
+            background: url('landertalina.jpg'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -32,6 +33,10 @@
             padding: 20px;
             max-width: 350px;
             width: 90%;
+            /* Make the guide stand out against the background */
+            background: rgba(0, 0, 0, 0.4); 
+            border-radius: 15px;
+            z-index: 500; /* Ensure it's above the background */
         }
 
         .mobile-guide.show {
@@ -45,6 +50,7 @@
             font-weight: bold;
             margin-bottom: 40px;
             line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Improve readability */
         }
 
         .step {
@@ -77,6 +83,7 @@
         }
 
         .arrow {
+            display: none; /* Controlled by JS */
             position: absolute;
             top: 15px;
             right: 5px;
@@ -128,20 +135,10 @@
         }
 
         .browser-icon {
-            color: #4ecdc4;
-            font-size: 24px;
-        }
-
-        /* Background image overlay for mobile - removed dark overlay */
-        .mobile-guide::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
-            z-index: -1;
+            /* Using a white color for visibility */
+            filter: invert(1); 
+            width: 24px; 
+            height: 24px;
         }
 
         /* Desktop styles */
@@ -173,10 +170,8 @@
     </style>
 </head>
 <body>
-    <!-- Arrow pointing to top right -->
     <div class="arrow" id="arrow"></div>
 
-    <!-- Mobile Guide Content -->
     <div class="mobile-guide" id="mobileGuide">
         <h1 class="title">I'm even cuter on Instagram, take a look😊</h1>
         
@@ -184,18 +179,17 @@
             <div class="step-icon">
                 <span class="finger-icon">⋯</span>
             </div>
-            <div class="step-text">Click the ⋯ button in the top right</div>
+            <div class="step-text">Click the ⋯ (3-dot) button in the top right</div>
         </div>
 
       <div class="step">
             <div class="step-icon">
-                <img src="externalBrowser.png" alt="External Browser" class="browser-icon" style="width: 24px; height: 24px;">
+                <img src="externalBrowser.png" alt="Open in Browser" class="browser-icon">
             </div>
             <div class="step-text">Select "Open in external browser"</div>
         </div>
     </div>
 
-    <!-- Desktop Redirect Content -->
     <div class="desktop-redirect" id="desktopRedirect">
         <div class="redirect-message">Getting ready for you...</div>
         <div class="spinner"></div>
@@ -203,70 +197,50 @@
 
     <script>
         // Configuration - Replace with your desired redirect URL
-        const REDIRECT_URL = 'https://www.instagram.com/talilovescake?igsh=OXgzazBtamZsd3o1&utm_source=qr'; // Change this to your desired link
+        const INSTAGRAM_HANDLE = 'talilovescake';
+        const REDIRECT_URL_GENERAL = `https://www.instagram.com/${INSTAGRAM_HANDLE}?igsh=OXgzazBtamZsd3o1&utm_source=qr`;
         
+        // Android Intent URI to force opening the app/external browser
+        // This is a powerful deep-linking mechanism on Android
+        const REDIRECT_URL_ANDROID_INTENT = `intent://instagram.com/${INSTAGRAM_HANDLE}#Intent;package=com.instagram.android;scheme=https;end`;
+
         // Testing mode - Set to true to force mobile view on desktop for testing
         const FORCE_MOBILE_VIEW = false; // Change to false for production
 
-        function isMobileDevice() {
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            
-            // Check for mobile user agents
-            const mobileKeywords = [
-                'Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
-                'IEMobile', 'Opera Mini', 'Mobile', 'mobile'
-            ];
-            
-            const isMobileUA = mobileKeywords.some(keyword => 
-                userAgent.toLowerCase().includes(keyword.toLowerCase())
-            );
-            
-            // Check for touch capability and screen size
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            const isSmallScreen = window.innerWidth <= 768;
-            
-            return isMobileUA || (isTouchDevice && isSmallScreen);
-        }
-
         function isInAppBrowser() {
-            const userAgent = navigator.userAgent.toLowerCase();
-            
-            // First, check for specific in-app browser indicators
+            const ua = navigator.userAgent.toLowerCase();
+
+            // 1. STRONGER TIKTOK/BYTEDANCE/INSTAGRAM DETECTION
             const inAppIndicators = [
                 'tiktok',
-                'bytedance',
+                'bytedance', // Parent company of TikTok
                 'musical_ly',
-                'instagram',
-                'fban',
-                'fbav',
-                'twitter',
-                'line',
-                'micromessenger',
-                'snapchat'
+                'instagram', // Instagram in-app browser
+                'fban',      // Facebook/Instagram App Browser
+                'fbav',      // Facebook/Instagram App Version
+                'wv'         // General indicator for Android WebView
             ];
             
-            // If we find a specific in-app browser indicator, it's definitely in-app
-            const hasInAppIndicator = inAppIndicators.some(indicator => userAgent.includes(indicator));
+            // Check for explicit in-app indicators
+            const isExplicitlyInApp = inAppIndicators.some(indicator => ua.includes(indicator));
+            if (isExplicitlyInApp) {
+                return true;
+            }
+
+            // 2. TIKTOK/Android SPECIFIC TRAP CATCHER
+            // TikTok's Android IAB often spoofs a standard Chrome browser.
+            const isAndroid = ua.includes('android');
+            const isChrome = ua.includes('chrome');
+            const isSafari = ua.includes('safari') && !ua.includes('crios'); // crios is Chrome on iOS
             
-            if (hasInAppIndicator) {
+            // If it looks like Android + Chrome, AND we didn't find any standard browser tokens (like 'wv' is missing),
+            // it's highly likely to be an IAB trying to hide.
+            if (isAndroid && isChrome && !isSafari) {
+                // This is the safety net that catches the tricky TikTok Android IAB
                 return true;
             }
             
-            // Check if it's a standard mobile browser (these should NOT be treated as in-app)
-            const isStandardBrowser = 
-                (userAgent.includes('safari') && !userAgent.includes('crios') && !userAgent.includes('fxios')) || // Mobile Safari
-                (userAgent.includes('chrome') && !userAgent.includes('wv') && userAgent.includes('mobile')) || // Chrome Mobile (not WebView)
-                userAgent.includes('firefox') || // Firefox Mobile
-                userAgent.includes('edge'); // Edge Mobile
-            
-            // If it's a standard browser, it's NOT in-app
-            if (isStandardBrowser) {
-                return false;
-            }
-            
-            // For everything else, assume it might be in-app if it's mobile
-            const isMobile = /android|iphone|ipad|ipod/i.test(userAgent);
-            return isMobile;
+            return false;
         }
 
         function initializePage() {
@@ -274,34 +248,44 @@
             const desktopRedirect = document.getElementById('desktopRedirect');
             const arrow = document.getElementById('arrow');
 
-            // Check if we should show mobile view (forced for testing OR specifically in TikTok/Instagram in-app browsers)
-            const showMobileView = FORCE_MOBILE_VIEW || isInAppBrowser();
+            const isIAB = isInAppBrowser();
+            const showMobileView = FORCE_MOBILE_VIEW || isIAB;
+            const isAndroid = navigator.userAgent.toLowerCase().includes('android');
 
             if (showMobileView) {
-                // Show mobile guide
+                // Show manual guide for in-app browsers
                 mobileGuide.classList.add('show');
                 desktopRedirect.style.display = 'none';
                 arrow.style.display = 'block';
+                
+                // Attempt an auto-redirect for Android IABs using the Intent URI.
+                // This may be blocked, but it's the best automated shot at breaking out.
+                if (isIAB && isAndroid) {
+                    setTimeout(() => {
+                        window.location.href = REDIRECT_URL_ANDROID_INTENT;
+                    }, 500); 
+                }
+                // For iOS IAB, only show the manual guide, as direct links are often blocked.
+
             } else {
-                // All other cases: redirect after short delay
+                // All other cases (external mobile browser or desktop): redirect after short delay
                 mobileGuide.style.display = 'none';
                 arrow.style.display = 'none';
+                desktopRedirect.style.display = 'flex'; // Ensure desktop spinner is visible
                 
                 setTimeout(() => {
-                    window.location.href = REDIRECT_URL;
-                }, 2000);
+                    window.location.href = REDIRECT_URL_GENERAL;
+                }, 1000); 
             }
         }
 
         // Initialize when page loads
         window.addEventListener('load', initializePage);
         
-        // Handle orientation changes on mobile
+        // Handle orientation/resize changes (keep this for responsiveness)
         window.addEventListener('orientationchange', () => {
             setTimeout(initializePage, 100);
         });
-
-        // Handle window resize
         window.addEventListener('resize', () => {
             setTimeout(initializePage, 100);
         });
