@@ -231,12 +231,28 @@
         function isInAppBrowser() {
             const userAgent = navigator.userAgent.toLowerCase();
             
-            // Check specifically for TikTok and Instagram in-app browsers
+            // More comprehensive check for in-app browsers
             const inAppIndicators = [
-                'tiktok', 'instagram'
+                'tiktok',
+                'bytedance',
+                'musical_ly',
+                'instagram',
+                'fban',
+                'fbav',
+                'twitter',
+                'line',
+                'micromessenger',
+                'snapchat'
             ];
             
-            return inAppIndicators.some(indicator => userAgent.includes(indicator));
+            // Also check for common in-app browser patterns
+            const isInApp = inAppIndicators.some(indicator => userAgent.includes(indicator));
+            
+            // Additional check: if it's mobile but NOT a standard browser
+            const isStandardBrowser = userAgent.includes('safari') && !userAgent.includes('crios') && !userAgent.includes('fxios');
+            const isMobile = /android|iphone|ipad|ipod/i.test(userAgent);
+            
+            return isInApp || (isMobile && !isStandardBrowser && !userAgent.includes('chrome'));
         }
 
         function initializePage() {
@@ -278,4 +294,3 @@
     </script>
 </body>
 </html>
-
