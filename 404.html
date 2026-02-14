@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+        // Check current URL path
+        var path = window.location.pathname;
+
+        // Define paths to handle
+        if (path.startsWith('/zoey/') || path === '/zoey') {
+            // Preserve the path info as a query parameter just in case
+            // Redirect to zoey.html
+            window.location.href = '/zoey.html' + window.location.search;
+        } else {
+            // Optional: Handle other 404s or just show a message
+            document.write('<h1>404 - Page Not Found</h1><p>The requested URL was not found on this server.</p>');
+        }
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>
